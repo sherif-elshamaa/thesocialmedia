@@ -1,6 +1,6 @@
 const baseUrl =
   process.env.NODE_ENV !== "production"
     ? "http://localhost:3000"
-    : "thesocialmediaa.netlify.app";
+    : "https://sherif-elshamaa.github.io/thesocialmedia";
 
 export default baseUrl;
