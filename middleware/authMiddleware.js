@@ -5,7 +5,7 @@ module.exports = (req, res, next) => {
     if (!req.headers.authorization) {
       return res.status(401).send(`Unauthorized`);
     }
-    console.log(req.headers.authorization, process.env.jwtSecret);
+    
     const { userId } = jwt.verify(req.headers.authorization, process.env.jwtSecret);
 
 
