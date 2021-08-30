@@ -31,6 +31,7 @@ function Login() {
     e.preventDefault();
 
     await loginUser(user, setErrorMsg, setFormLoading);
+    
   };
 
   useEffect(() => {

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef} from "react";
 import { useRouter } from "next/router";
+import io from "socket.io-client";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
 import { parseCookies } from "nookies";
@@ -15,6 +16,10 @@ import Following from "../components/Profile/Following";
 import UpdateProfile from "../components/Profile/UpdateProfile";
 import Settings from "../components/Profile/Settings";
 import { PostDeleteToastr } from "../components/Layout/Toastr";
+import MessageNotificationModal from "../components/Home/MessageNotificationModal";
+import newMsgSound from "../utils/newMsgSound";
+import getUserInfo from "../utils/getUserInfo";
+
 
 function ProfilePage({
   errorLoading,
@@ -38,6 +43,43 @@ function ProfilePage({
   const ownAccount = profile.user._id === user._id;
 
   if (errorLoading) return <NoProfile />;
+  const socket = useRef();
+
+  const [newMessageReceived, setNewMessageReceived] = useState(null);
+  const [newMessageModal, showNewMessageModal] = useState(false);
+
+  useEffect(() => {
+    if (!socket.current) {
+      socket.current = io(baseUrl);
+    }
+
+    if (socket.current) {
+      socket.current.emit("join", { userId: user._id });
+
+      socket.current.on("newMsgReceived", async ({ newMsg }) => {
+        const { name, profilePicUrl } = await getUserInfo(newMsg.sender);
+
+        if (user.newMessagePopup) {
+          setNewMessageReceived({
+            ...newMsg,
+            senderName: name,
+            senderProfilePic: profilePicUrl
+          });
+          showNewMessageModal(true);
+        }
+        newMsgSound(name);
+      });
+    }
+
+    document.title = `Welcome, ${user.name.split(" ")[0]}`;
+
+    return () => {
+      if (socket.current) {
+        socket.current.emit("disconnect");
+        socket.current.off();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const getPosts = async () => {
@@ -66,7 +108,15 @@ function ProfilePage({
   return (
     <>
       {showToastr && <PostDeleteToastr />}
-
+      {newMessageModal && newMessageReceived !== null && (
+        <MessageNotificationModal
+          socket={socket}
+          showNewMessageModal={showNewMessageModal}
+          newMessageModal={newMessageModal}
+          newMessageReceived={newMessageReceived}
+          user={user}
+        />
+      )}
       <Grid stackable>
         <Grid.Row>
           <Grid.Column>
