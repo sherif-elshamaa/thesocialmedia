@@ -1,7 +1,6 @@
 const baseUrl =
   process.env.NODE_ENV !== "production"
     ? "http://localhost:3000"
-    : "https://thesocialmedia.herokuapp.com";
+    : "https://thesocialmediaa.web.app";
 
-
-export default baseUrl;
+module.exports = baseUrl;

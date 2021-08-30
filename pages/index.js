@@ -14,9 +14,10 @@ import cookie from "js-cookie";
 import getUserInfo from "../utils/getUserInfo";
 import MessageNotificationModal from "../components/Home/MessageNotificationModal";
 import newMsgSound from "../utils/newMsgSound";
+import NotificationPortal from "../components/Home/NotificationPortal";
 
 function Index({ user, postsData, errorLoading }) {
-  const [posts, setPosts] = useState(postsData||[]);
+  const [posts, setPosts] = useState(postsData || []);
   const [showToastr, setShowToastr] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -26,6 +27,9 @@ function Index({ user, postsData, errorLoading }) {
 
   const [newMessageReceived, setNewMessageReceived] = useState(null);
   const [newMessageModal, showNewMessageModal] = useState(false);
+
+  const [newNotification, setNewNotification] = useState(null);
+  const [notificationPopup, showNotificationPopup] = useState(false);
 
   useEffect(() => {
     if (!socket.current) {
@@ -82,8 +86,29 @@ function Index({ user, postsData, errorLoading }) {
 
   if (posts.length === 0 || errorLoading) return <NoPosts />;
 
+  useEffect(() => {
+    if (socket.current) {
+      socket.current.on(
+        "newNotificationReceived",
+        ({ name, profilePicUrl, username, postId }) => {
+          setNewNotification({ name, profilePicUrl, username, postId });
+
+          showNotificationPopup(true);
+        }
+      );
+    }
+  }, []);
+
   return (
     <>
+      {notificationPopup && newNotification !== null && (
+        <NotificationPortal
+          newNotification={newNotification}
+          notificationPopup={notificationPopup}
+          showNotificationPopup={showNotificationPopup}
+        />
+      )}
+
       {showToastr && <PostDeleteToastr />}
 
       {newMessageModal && newMessageReceived !== null && (
@@ -108,6 +133,7 @@ function Index({ user, postsData, errorLoading }) {
         >
           {posts.map(post => (
             <CardPost
+              socket={socket}
               key={post._id}
               post={post}
               user={user}

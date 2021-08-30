@@ -23,7 +23,11 @@ router.get("/", authMiddleware, async (req, res) => {
         date: chat.messages[chat.messages.length - 1].date
       }));
     }
-
+    const userState = await UserModel.findById(userId);
+    if (userState.unreadMessage) {
+      userState.unreadMessage = false;
+      await userState.save();
+    }
     return res.json(chatsToBeSent);
   } catch (error) {
     console.error(error);

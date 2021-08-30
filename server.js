@@ -19,6 +19,8 @@ const {
   deleteMsg
 } = require("./utilsServer/messageActions");
 
+const { likeOrUnlikePost } = require("./utilsServer/likeOrUnlikePost");
+
 io.on("connection", socket => {
   socket.on("join", async ({ userId }) => {
     const users = await addUser(userId, socket.id);
@@ -29,6 +31,35 @@ io.on("connection", socket => {
         users: users.filter(user => user.userId !== userId)
       });
     }, 10000);
+  });
+
+  socket.on("likePost", async ({ postId, userId, like }) => {
+    const {
+      success,
+      name,
+      profilePicUrl,
+      username,
+      postByUserId,
+      error
+    } = await likeOrUnlikePost(postId, userId, like);
+
+    if (success) {
+      socket.emit("postLiked");
+
+      if (postByUserId !== userId) {
+        const receiverSocket = findConnectedUser(postByUserId);
+
+        if (receiverSocket && like) {
+          // WHEN YOU WANT TO SEND DATA TO ONE PARTICULAR CLIENT
+          io.to(receiverSocket.socketId).emit("newNotificationReceived", {
+            name,
+            profilePicUrl,
+            username,
+            postId
+          });
+        }
+      }
+    }
   });
 
   socket.on("loadMessages", async ({ userId, messagesWith }) => {
@@ -78,7 +109,6 @@ io.on("connection", socket => {
   socket.on("disconnect", () => removeUser(socket.id));
 });
 
-
 nextApp.prepare().then(() => {
   app.use("/api/signup", require("./api/signup"));
   app.use("/api/auth", require("./api/auth"));
@@ -87,11 +117,12 @@ nextApp.prepare().then(() => {
   app.use("/api/profile", require("./api/profile"));
   app.use("/api/notifications", require("./api/notifications"));
   app.use("/api/chats", require("./api/chats"));
+  app.use("/api/reset", require("./api/reset"));
 
   app.all("*", (req, res) => handle(req, res));
 
-  server.listen(PORT, (err) => {
+  server.listen(PORT, err => {
     if (err) throw err;
-    console.log(`Express server running on ${PORT}`);
+    console.log("Express server running");
   });
 });
