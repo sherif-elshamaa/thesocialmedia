@@ -11,13 +11,7 @@ require("dotenv").config({ path: "./config.env" });
 const connectDb = require("./utilsServer/connectDb");
 connectDb();
 app.use(express.json());
-app.use(
-    cors({
-        origin: ['https://thesocialmedia-kzu9.vercel.app']  // <-- location of the react app were connecting to
-        credentials: true,
-    })
-
-);
+app.options('*', cors()) 
 const PORT = process.env.PORT || 3000;
 const { addUser, removeUser, findConnectedUser } = require("./utilsServer/roomActions");
 const {
