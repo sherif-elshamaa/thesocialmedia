@@ -1,6 +1,9 @@
 {
   "name": "social-media",
   "version": "0.1.0",
+  "engines": {
+    "node": "16"
+  },
   "private": false,
   "scripts": {
     "dev": "nodemon server.js",
